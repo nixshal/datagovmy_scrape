@@ -5,14 +5,14 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-dataframe_list =[]
+
 
 #example website #website = 'http://www.data.gov.my/data/ms_MY/dataset?organization=ministry-of-higher-education&page=1'
 #for this example I used ministry of education
 
 #function that creates a dataframe per page of data on the website, 1 df = 1 page, then
 #combined into a large df made into csv file
-def CreateDataFrame():
+def CreateDataFrame(website):
     urls = []
     datalinks = []
     urls_new =[]
@@ -77,6 +77,7 @@ def CreateDataFrame():
     #simple print to see the output 
     for i in range(len(urls)):
         print('Number of dataset checks Completed: # ' + str(i)) #tells you how many dataset checks have been completed so far in a specific page
+
     #CHECKING ALL WORKS
     # print(urls)           #this is all the uncleaned links to datasets
     # print(titles)         #this is the non-bolded 'description' of the data on the mainpage
@@ -85,31 +86,45 @@ def CreateDataFrame():
     # print(dateCreated)
 
     # #organizing datalinks, titles and timestamps into a nice pandas dataframe
-    df = pd.DataFrame({'Titles': titles, 'URL_Links': datalinks, 'Date Created': dateCreated, 'Date Updated':dateUpdated})
+    df = pd.DataFrame({'Titles': titles, 'DataLinks': datalinks, 'Date Created': dateCreated, 'Date Updated':dateUpdated})
     #returns a dataframe of the information
     return df 
 
-#specify your website here in this format: #website = 'http://www.data.gov.my/data/ms_MY/dataset?organization=ministry-of-higher-education&page=' + str(i)
-#LOOP FOR DESIRED PAGES e.g first two pages use range (1,3)
-for i in range(1,5):
-    website = 'http://www.data.gov.my/data/ms_MY/dataset?organization=ministry-of-higher-education&page=' + str(i)
-    dataframe = CreateDataFrame()
-    dataframe_list.append(dataframe)
-    print('Page Number: #' + str(i)) #tells you which page you are on
+#USER EDITABLE VARIABLES #note that max page is 57.
+PAGE_START = 1
+PAGE_STOP = 15
+CSV_FILENAME = 'allpages_kementerian_kesihatan.csv'
 
-'''dataframes from CreateDataFrame are stored in dataframe_list,
-   pd.concat dataframe_list to join the dataframes,
-   then reset the index to give accurate count, drop=True to drop the old index
-'''
-final_dataframe = pd.concat(dataframe_list).reset_index(drop=True) 
+def get_csv(page_start,page_stop,csv_filename):
+	#specify your website here in this format: #website = 'http://www.data.gov.my/data/ms_MY/dataset?organization=ministry-of-higher-education&page=' + str(i)
+	#LOOP FOR DESIRED PAGES e.g first two pages use range (1,3)
+	dataframe_list =[] 
+	for i in range(PAGE_START,PAGE_STOP):
+	    website = 'http://www.data.gov.my/data/ms_MY/dataset?organization=ministry-of-higher-education&page=' + str(i)
+	    d = CreateDataFrame(website)
+	    dataframe_list.append(d)
+	    print('Page Number: #' + str(i)) #tells you which page you are on
 
-#finally make the dataframe into a csv stored in the same directory
-final_dataframe.to_csv('testing.csv')
+	'''dataframes from CreateDataFrame are stored in dataframe_list,
+	   pd.concat dataframe_list to join the dataframes,
+	   then reset the index to give accurate count, drop=True to drop the old index'''
 
-    
+	final_dataframe = pd.concat(dataframe_list).reset_index(drop=True) 
+
+	#finally make the dataframe into a csv stored in the same directory
+	final_dataframe.to_csv(CSV_FILENAME)
 
 
-    
+#RUN PROGRAM HERE
+
+try:
+    get_csv(PAGE_START,PAGE_STOP,CSV_FILENAME)
+except (ConnectionError,TimeoutError):
+    print('Error occured')
+else:
+    print("\n100/100 success.\n\nPlease check the .CSV file in directory")
+
+
     
 ####################################################################################################
 ############################################OLD CODE HERE###########################################
